@@ -1,5 +1,3 @@
-#Script to initialze virtual disks after instantiating a VM from the tempate "alv-2022-template v.1.4 (high performance SQL)"
-
 # Define disk configuration
 $disks = @(
     @{ Number = 1; DriveLetter = 'E'; Label = 'Databases';         AllocationUnitSize = 65536 },
@@ -30,20 +28,23 @@ foreach ($diskInfo in $disks) {
         Initialize-Disk -Number $diskNumber -PartitionStyle GPT
     }
 
+    # Remove existing volumes/partitions if necessary (optional safeguard)
+    # Get-Partition -DiskNumber $diskNumber | Remove-Partition -Confirm:$false
+
     # Create a new partition using all available space
     $partition = New-Partition -DiskNumber $diskNumber -UseMaximumSize -AssignDriveLetter
 
-    # Format with NTFS and 64KB allocation unit size
-    Format-Volume -Partition $partition -FileSystem NTFS -NewFileSystemLabel $label -AllocationUnitSize $unitSize -Confirm:$false
+    # Format the partition with FULL format and correct allocation unit size
+    Format-Volume -Partition $partition `
+                  -FileSystem NTFS `
+                  -NewFileSystemLabel $label `
+                  -AllocationUnitSize $unitSize `
+                  -Full `
+                  -Force `
+                  -Confirm:$false
 
-    # Assign specific drive letter
+    # Set the specified drive letter
     Set-Partition -DriveLetter $partition.DriveLetter -NewDriveLetter $driveLetter
 
-    Write-Host "Disk $diskNumber configured: $driveLetter`: Label='$label', AllocationUnitSize=$unitSize" -ForegroundColor Green
+    Write-Host "Disk $diskNumber configured as $driveLetter`: Label='$label', ClusterSize=$unitSize" -ForegroundColor Green
 }
-
-
-#Section to create subdirectories
-
-
-
