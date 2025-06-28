@@ -1,3 +1,5 @@
+#ver 3
+
 $disks = @(
     @{ Number = 1; DriveLetter = 'E'; Label = 'Databases';         AllocationUnitSize = 65536 },
     @{ Number = 2; DriveLetter = 'F'; Label = 'Transaction Logs';  AllocationUnitSize = 65536 },
