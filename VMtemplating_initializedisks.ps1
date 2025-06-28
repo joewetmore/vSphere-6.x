@@ -1,4 +1,3 @@
-# Define disk configuration
 $disks = @(
     @{ Number = 1; DriveLetter = 'E'; Label = 'Databases';         AllocationUnitSize = 65536 },
     @{ Number = 2; DriveLetter = 'F'; Label = 'Transaction Logs';  AllocationUnitSize = 65536 },
@@ -12,7 +11,7 @@ foreach ($diskInfo in $disks) {
     $label        = $diskInfo.Label
     $unitSize     = $diskInfo.AllocationUnitSize
 
-    Write-Host "Processing Disk $diskNumber..." -ForegroundColor Cyan
+    Write-Host "Preparing Disk $diskNumber..." -ForegroundColor Cyan
 
     $disk = Get-Disk -Number $diskNumber
 
@@ -28,23 +27,14 @@ foreach ($diskInfo in $disks) {
         Initialize-Disk -Number $diskNumber -PartitionStyle GPT
     }
 
-    # Remove existing volumes/partitions if necessary (optional safeguard)
-    # Get-Partition -DiskNumber $diskNumber | Remove-Partition -Confirm:$false
-
-    # Create a new partition using all available space
     $partition = New-Partition -DiskNumber $diskNumber -UseMaximumSize -AssignDriveLetter
 
-    # Format the partition with FULL format and correct allocation unit size
-    Format-Volume -Partition $partition `
-                  -FileSystem NTFS `
-                  -NewFileSystemLabel $label `
-                  -AllocationUnitSize $unitSize `
-                  -Full `
-                  -Force `
-                  -Confirm:$false
+    # Use format.com for a faster format that respects cluster size
+    $formatCmd = "format $($partition.DriveLetter): /FS:NTFS /V:`"$label`" /Q /A:$($unitSize) /Y"
+    Write-Host "Running: $formatCmd" -ForegroundColor Yellow
+    Start-Process -FilePath "cmd.exe" -ArgumentList "/c", $formatCmd -Wait -NoNewWindow
 
-    # Set the specified drive letter
     Set-Partition -DriveLetter $partition.DriveLetter -NewDriveLetter $driveLetter
 
-    Write-Host "Disk $diskNumber configured as $driveLetter`: Label='$label', ClusterSize=$unitSize" -ForegroundColor Green
+    Write-Host "Disk $diskNumber configured: $driveLetter`: Label='$label', ClusterSize=$unitSize" -ForegroundColor Green
 }
