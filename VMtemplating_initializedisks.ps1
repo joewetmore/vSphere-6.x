@@ -43,3 +43,7 @@ foreach ($diskInfo in $disks) {
 }
 
 
+#Section to create subdirectories
+
+
+
